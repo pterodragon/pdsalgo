@@ -8,6 +8,8 @@
 #include "prettyprint.hpp"
 #include "suffix_array.hpp"
 
+using namespace P;
+
 #define testcase(res, exp)                  \
   {                                         \
     cout << #res << " = " << res << '\t';   \

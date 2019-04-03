@@ -15,6 +15,7 @@
   }
 
 using namespace std;
+using namespace P;
 
 void test_dsuf() {
   const int n = 16;

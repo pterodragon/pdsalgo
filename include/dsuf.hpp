@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 
+namespace P {
 using namespace std;
 /*
  * reference:
@@ -25,7 +26,7 @@ class DSUF {
   void uni(int u, int v) {
     u = root(u);
     v = root(v);
-    if (u == v) return; // erase this if no check
+    if (u == v) return;  // erase this if no check
     if (p[u] > p[v]) swap(u, v);
     p[u] += p[v];
     p[v] = u;
@@ -37,4 +38,5 @@ class DSUF {
   vector<int> p;  // parents (and negative size(/rank) for roots)
 };
 
+}  // namespace P
 #endif /* DSUF_HPP */

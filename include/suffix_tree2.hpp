@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 
+namespace P {
 using namespace std;
 
 class SuffixTree2 {
@@ -16,8 +17,8 @@ class SuffixTree2 {
   string_view s;
   const unsigned N;
   static constexpr const unsigned ROOT = 0, INF = UINT_MAX;
-  vector<map<char, state> > g; // transitions // use array for O(n) build time
-  vector<unsigned> f;  // suffix links // doesn't matter what f[0] is
+  vector<map<char, state> > g;  // transitions // use array for O(n) build time
+  vector<unsigned> f;           // suffix links // doesn't matter what f[0] is
   struct RP {
     unsigned lp = 0, len = INF;
   };
@@ -69,4 +70,5 @@ class SuffixTree2 {
   }
 };
 
+}  // namespace P
 #endif /* SUFFIX_TREE2_HPP */

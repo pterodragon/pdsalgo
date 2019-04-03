@@ -8,7 +8,8 @@
 #include <vector>
 
 #include <iostream>
-#include "prettyprint.hpp"
+
+namespace P {
 
 using namespace std;
 
@@ -193,4 +194,5 @@ pair<int, int> SuffixArray<Alph, SC>::lrs() const {
   return {sa[distance(begin(lcp_), it)], *it};
 }
 
+}
 #endif /* SUFFIX_ARRAY_HPP */

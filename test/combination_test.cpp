@@ -5,6 +5,8 @@
 #include "combination1.hpp"
 #include "combination2.hpp"
 
+using namespace P;
+
 void run(int* arr, int n, int r) {
     printf("### Include and exclude every element\n");
     combination_include_and_exclude(arr, n, r);

@@ -4,6 +4,7 @@
 #include <numeric>
 #include <vector>
 
+namespace P {
 using namespace std;
 
 template <typename T, int S = 1 << (sizeof(T) * 8)>
@@ -43,3 +44,4 @@ vector<T> counting_sort2(const vector<T>& v, Func f) {
   for (int q = 0; q < v.size(); ++q) res[c[f(v[q])]++] = v[q];
   return res;
 }
+}  // namespace P

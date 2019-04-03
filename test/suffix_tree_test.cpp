@@ -5,6 +5,8 @@
 
 #include "prettyprint.hpp"
 
+using namespace P;
+
 #define testcase(res, exp)                  \
   {                                         \
     cout << #res << " = " << res << '\t';   \

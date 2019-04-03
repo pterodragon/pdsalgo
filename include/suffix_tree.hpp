@@ -3,12 +3,14 @@
 // pp. 249-260, 1995.
 //
 // Implementation is as close to the pseudocode in the paper as possible
+#include <algorithm>
 #include <array>
 #include <string_view>
 #include <tuple>
 #include <vector>
-#include <algorithm>
+#include <iostream>
 
+namespace P {
 using namespace std;
 
 // AlphabetSize (default is small letters); SC = Start char
@@ -273,9 +275,10 @@ string_view SuffixTree<Alph, SC>::lcs(string_view sva, string_view svb) {
 //   string s = sa + sb;
 //   SuffixTree st(s);
 //   st.print();
-// 
+//
 //   vector<int> pos;
-//   auto dfs = [&st, &pos, N = s.size(), N_1 = sa.size()](int len, state s, auto f) -> int {
+//   auto dfs = [&st, &pos, N = s.size(), N_1 = sa.size()](int len, state s,
+//   auto f) -> int {
 //     cout << "--------------------\n";
 //     for (int c = 0; c < Alph; ++c) {
 //       if (auto [kp, pp, sp] = st.g[s][c]; sp != 0) {
@@ -303,7 +306,8 @@ string_view SuffixTree<Alph, SC>::lcs(string_view sva, string_view svb) {
 //               pos[kp] = len;
 //             }
 //           }
-//           cout << "kp: " << kp << ", len: " << len << ", kp_other: " << kp_other << '\n';
+//           cout << "kp: " << kp << ", len: " << len << ", kp_other: " <<
+//           kp_other << '\n';
 //         } else {
 //           auto [b_recur, res_recur] = f({len + pp - kp + 1, kp}, sp, f);
 //           if (b_recur == 3) {
@@ -327,7 +331,6 @@ string_view SuffixTree<Alph, SC>::lcs(string_view sva, string_view svb) {
 //   }
 // }
 
-#include <iostream>
 template <int Alph, char SC>
 void SuffixTree<Alph, SC>::print() const {
   cout << "f: ";
@@ -347,3 +350,4 @@ void SuffixTree<Alph, SC>::print() const {
   }
   cout << '\n';
 }
+}  // namespace P

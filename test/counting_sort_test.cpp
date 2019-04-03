@@ -1,6 +1,8 @@
 #include <iostream>
 #include "counting_sort.hpp"
 
+using namespace P;
+
 int main() {
   string str = "hellozzaz";
   vector strv(begin(str), end(str));
