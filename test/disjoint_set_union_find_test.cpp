@@ -1,7 +1,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "dsuf.hpp"
+#include "ds/dsuf.hpp"
 
 #define testcase(res, exp)                  \
   {                                         \

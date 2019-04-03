@@ -6,7 +6,7 @@
 #include <unordered_set>
 
 #include "prettyprint.hpp"
-#include "suffix_array.hpp"
+#include "ds/suffix_array.hpp"
 
 using namespace P;
 

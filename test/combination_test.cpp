@@ -2,8 +2,8 @@
 // Program to print all combination of size r in an array of size n
 #include <stdio.h>
 #include <stdlib.h>
-#include "combination1.hpp"
-#include "combination2.hpp"
+#include "algo/combination1.hpp"
+#include "algo/combination2.hpp"
 
 using namespace P;
 

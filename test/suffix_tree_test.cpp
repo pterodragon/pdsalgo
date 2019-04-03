@@ -1,4 +1,4 @@
-#include "suffix_tree.hpp"
+#include "ds/suffix_tree.hpp"
 
 #include <cassert>
 #include <unordered_set>

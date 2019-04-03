@@ -1,5 +1,5 @@
 #include <iostream>
-#include "counting_sort.hpp"
+#include "algo/counting_sort.hpp"
 
 using namespace P;
 
