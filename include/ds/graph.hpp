@@ -5,6 +5,7 @@
 #include <iostream>
 #include <tuple>
 #include <vector>
+#include <queue>
 
 using namespace std;
 
@@ -17,6 +18,8 @@ namespace P {
 
 /*
  * Adjacency Matrix
+ *
+ * Can be used for Directed/Undirected graph
  *
  * Space complexity: O(|V|^2)
  * Time complexity:
@@ -59,6 +62,8 @@ struct AdjMat {
 /*
  * Adjacency List
  *
+ * Can be used for Directed/Undirected graph
+ *
  * Space complexity: O(|V| + |E|)
  * Time complexity:
  * - Add vertex: O(1)
@@ -85,6 +90,70 @@ struct AdjList {
     return os;
   }
 
+  /*
+   * For directed tree traversal from root, use dfs_dtree
+   * to save the visited check
+   *
+   * Assumes connected graph
+   */
+  template <typename F>
+  void dfs(int root, F f) {
+    vector<int> visited(N());
+    auto dfs_ = [this, &visited, &f](int node, auto dfs__) {
+      if (visited[node]) return;
+      visited[node] = true;
+      f(node);
+      for (int v : neigh[node]) dfs__(v, dfs__);
+    };
+    dfs_(root, dfs_);
+  }
+
+  /*
+   * Use only for directed tree traversal
+   */
+  template <typename F>
+  void dfs_dtree(int root, F f) {
+    auto dfs_ = [this, &f](int node, auto dfs__) -> void {
+      f(node);
+      for (int v : neigh[node]) dfs__(v, dfs__);
+    };
+    dfs_(root, dfs_);
+  }
+
+  template <typename F>
+  void bfs(int root, F f) {
+    queue<int> q;
+    q.push(root);
+    vector<int> visited(N());
+    visited[root] = true;
+    while (!q.empty()) {
+      int s = q.front();
+      q.pop();
+      f(s);
+      for (auto v: neigh[s]) {
+        if (visited[v]) continue;
+        visited[v] = true;
+        q.push(v);
+      }
+    }
+  }
+
+  template <typename F>
+  void bfs_depth(int root, F f) {
+    queue<int> q;
+    q.push(root);
+    vector<int> depth(N());
+    while (!q.empty()) {
+      int s = q.front();
+      q.pop();
+      f(s, depth[s]);
+      for (auto v: neigh[s]) {
+        if (depth[v]) continue;
+        depth[v] = depth[s] + 1;
+        q.push(v);
+      }
+    }
+  }
  private:
   vector<vector<int>> neigh;  // list of adjacent vertices
 };
