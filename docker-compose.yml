@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+    pdsalgo:
+        build: .
+        container_name: pdsalgo
+        image: pdsalgo
+        stdin_open: true
+        tty: true
+        volumes:
+            - ./:/home/wing/app
+        cap_add:
+            - SYS_PTRACE
+        security_opt:
+            - seccomp:unconfined
