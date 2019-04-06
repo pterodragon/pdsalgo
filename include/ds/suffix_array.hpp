@@ -144,7 +144,7 @@ vector<int> SuffixArray<Alph, SC>::binary_search(string_view pat) const {
   });
   auto it_r = upper_bound(cbegin(sa), cend(sa), pat, [this](auto pat, auto a) {
     auto [it1, it2] = mismatch(cbegin(pat), end(pat), cbegin(sv) + a, cend(sv));
-    return it2 == cend(sv) || *it1 < *it2;
+    return it1 != cend(pat) && it2 != cend(sv) && *it1 < *it2;
   });
   return vector(it_l, it_r);
 }
@@ -170,8 +170,9 @@ vector<int> SuffixArray<Alph, SC>::lcp() const {
  */
 template <unsigned Alph, char SC>
 vector<int> SuffixArray<Alph, SC>::plcp() const {
-  vector<int> phi(N);  // phi[i] index of previous suffix of sa[i]
   vector<int> plcp(N);
+  if (N == 0) return plcp;
+  vector<int> phi(N);  // phi[i] index of previous suffix of sa[i]
   phi[sa[0]] = -1;
   for (int i = 1; i < N; ++i) phi[sa[i]] = sa[i - 1];
   for (int i = 0, L = 0; i < N; ++i) {

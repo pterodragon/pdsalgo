@@ -97,7 +97,9 @@ class SuffixTree {
   }
 
   string_view t;
+ public:
   const int N;      // length of string
+ private:
   state q_count;    // state indices
   vector<state> f;  // suffix links
 

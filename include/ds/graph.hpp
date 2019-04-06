@@ -3,9 +3,9 @@
 
 #include <iomanip>
 #include <iostream>
+#include <queue>
 #include <tuple>
 #include <vector>
-#include <queue>
 
 using namespace std;
 
@@ -97,7 +97,7 @@ struct AdjList {
    * Assumes connected graph
    */
   template <typename F>
-  void dfs(int root, F f) {
+  void dfs(int root, F f) const {
     vector<int> visited(N());
     auto dfs_ = [this, &visited, &f](int node, auto dfs__) {
       if (visited[node]) return;
@@ -112,7 +112,7 @@ struct AdjList {
    * Use only for directed tree traversal
    */
   template <typename F>
-  void dfs_dtree(int root, F f) {
+  void dfs_dtree(int root, F f) const {
     auto dfs_ = [this, &f](int node, auto dfs__) -> void {
       f(node);
       for (int v : neigh[node]) dfs__(v, dfs__);
@@ -121,16 +121,16 @@ struct AdjList {
   }
 
   template <typename F>
-  void bfs(int root, F f) {
+  void bfs(int root, F f) const {
     queue<int> q;
     q.push(root);
     vector<int> visited(N());
     visited[root] = true;
     while (!q.empty()) {
-      int s = q.front();
+      int u = q.front();
       q.pop();
-      f(s);
-      for (auto v: neigh[s]) {
+      f(u);
+      for (auto v : neigh[u]) {
         if (visited[v]) continue;
         visited[v] = true;
         q.push(v);
@@ -139,21 +139,44 @@ struct AdjList {
   }
 
   template <typename F>
-  void bfs_depth(int root, F f) {
+  void bfs_depth(int root, F f) const {
     queue<int> q;
     q.push(root);
     vector<int> depth(N());
     while (!q.empty()) {
-      int s = q.front();
+      int u = q.front();
       q.pop();
-      f(s, depth[s]);
-      for (auto v: neigh[s]) {
+      f(u, depth[u]);
+      for (auto v : neigh[u]) {
         if (depth[v]) continue;
-        depth[v] = depth[s] + 1;
+        depth[v] = depth[u] + 1;
         q.push(v);
       }
     }
   }
+
+  /*
+   * Time Complexity: O(|V|+|E|)
+   *
+   * Assumes the graph is acyclic
+   */
+  template <typename F, template<typename...> class Queue=queue>
+  void topological_sort(F f) const {
+    vector<int> in_deg(N());
+    for (int u = 0; u < N(); ++u)
+      for (int v : neigh[u]) ++in_deg[v];
+    Queue<int> q;  // use priority queue for lexicographically smallest result
+    for (int u = 0; u < N(); ++u)
+      if (in_deg[u] == 0) q.push(u);
+    while (!q.empty()) {
+      int u = q.front();
+      q.pop();
+      f(u);
+      for (int v : neigh[u])
+        if (--in_deg[v] == 0) q.push(v);
+    }
+  }
+
  private:
   vector<vector<int>> neigh;  // list of adjacent vertices
 };

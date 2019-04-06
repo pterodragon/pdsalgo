@@ -12,7 +12,7 @@ void counting_sort_inplace(vector<T>& v) {
   array<int, S> c{};
   for (auto const& e : v) ++c[e];
   auto it = begin(v);
-  for (auto const& e : c) it = fill_n(it, c[e], e);
+  for (int q = 0; q < c.size(); ++q) it = fill_n(it, c[q], q);
 }
 
 // stable sort the collection based on f(e) for e in v
