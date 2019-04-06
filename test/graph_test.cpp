@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <random>
 
 #include "ds/graph.hpp"
 #include "prettyprint.hpp"
@@ -71,5 +72,77 @@ TEST_CASE("graph traversal", "[graph]") {
     REQUIRE(seq.size() == n);
     REQUIRE(actual_depth == exp_depth);
     seq.clear();
+  }
+}
+
+TEST_CASE("topological sort lexicographical", "[graph]") {
+  const int n = 6;
+  AdjList al(n);
+  al[5].push_back(2);
+  al[5].push_back(0);
+  al[4].push_back(0);
+  al[4].push_back(1);
+  al[2].push_back(3);
+  al[3].push_back(1);
+  vector<int> seq;
+  al.topological_sort_lex([&seq](int x) { seq.push_back(x); });
+  vector exp{4, 5, 0, 2, 3, 1};
+  REQUIRE(seq == exp);
+  REQUIRE(al.is_topological_sort(seq));
+}
+
+TEST_CASE("topological sort", "[graph]") {
+  const int n = GENERATE(0, 1, 2, 3, 4, 33, 128);
+  mt19937 gen;
+  uniform_int_distribution<> dis(0, n - 1);
+
+  AdjList al(n);
+  for (int q = 0; q < 3 * n; ++q) {
+    int a = dis(gen);
+    int b = dis(gen);
+    if (find(cbegin(al[a]), cend(al[a]), b) == cend(al[a])) {
+      al[a].push_back(b);
+      if (al.is_cyclic()) al[a].pop_back();
+    }
+  }
+  vector<int> seq;
+  al.topological_sort([&seq](int x) { seq.push_back(x); });
+  CAPTURE(seq);
+  REQUIRE(al.is_topological_sort(seq));
+}
+
+TEST_CASE("is cyclic", "[graph]") {
+  SECTION("cyclic case") {
+    AdjList al(1);
+    auto after_check = [&al]() {
+      REQUIRE(al.is_cyclic());
+      auto cycle = al.find_cycle();
+      REQUIRE(al.has_cycle(cycle));
+    };
+    SECTION("self loop") {
+      al = AdjList(5);
+      al[3].push_back(3);
+      after_check();
+    }
+    SECTION("large loop") {
+      const int n = 4;
+      al = AdjList(n);
+      al[0].push_back(1);
+      al[1].push_back(2);
+      al[2].push_back(3);
+      al[3].push_back(0);
+      after_check();
+    }
+  }
+  SECTION("tree case") {
+    const int n = GENERATE(4, 15, 33, 129);
+    AdjList al(n);
+    for (int q = 1; q * 2 + 1 < n; ++q) {
+      al[q].push_back(q * 2);
+      al[q].push_back(q * 2 + 1);
+    }
+    REQUIRE_FALSE(al.is_cyclic());
+    al[n / 2].push_back(n / 4);
+    REQUIRE(al.is_cyclic());
   }
 }

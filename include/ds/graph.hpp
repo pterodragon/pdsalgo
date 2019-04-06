@@ -1,6 +1,7 @@
 #ifndef GRAPH_HPP
 #define GRAPH_HPP
 
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <queue>
@@ -20,6 +21,8 @@ namespace P {
  * Adjacency Matrix
  *
  * Can be used for Directed/Undirected graph
+ *
+ * Directed graph: (u -> v) is an edge <=> [u][v] > 0
  *
  * Space complexity: O(|V|^2)
  * Time complexity:
@@ -43,6 +46,18 @@ struct AdjMat {
   friend ostream& operator<<(ostream& os, AdjMat& mat) {
     mat.print(os);
     return os;
+  }
+
+  /*
+   * Implicit step from path[N - 1] to path[0]
+   */
+  bool has_cycle(vector<int> const& path) {
+    const int M = path.size();
+    for (int q = 0; q < M - 1; ++q)
+      if ((*this)[{path[q], path[q + 1]}] == 0) return false;
+
+    if ((*this)[{path[M - 1], path[0]}] == 0) return false;
+    return true;
   }
 
   template <int PrintColWidth = 1>
@@ -156,18 +171,22 @@ struct AdjList {
   }
 
   /*
-   * Time Complexity: O(|V|+|E|)
+   * Time complexity: O(|V|+|E|)
    *
    * Assumes the graph is acyclic
+   *
+   * topological_sort_lex uses priority queue for lexicographically smallest
+   * result
    */
-  template <typename F, template<typename...> class Queue=queue>
+  template <typename F>
   void topological_sort(F f) const {
     vector<int> in_deg(N());
     for (int u = 0; u < N(); ++u)
       for (int v : neigh[u]) ++in_deg[v];
-    Queue<int> q;  // use priority queue for lexicographically smallest result
+    queue<int> q;
     for (int u = 0; u < N(); ++u)
       if (in_deg[u] == 0) q.push(u);
+
     while (!q.empty()) {
       int u = q.front();
       q.pop();
@@ -175,6 +194,102 @@ struct AdjList {
       for (int v : neigh[u])
         if (--in_deg[v] == 0) q.push(v);
     }
+  }
+
+  /*
+   * Time complexity: O(|V|+|E|)
+   * Space complexity: O(|V|)
+   */
+  bool is_topological_sort(vector<int> const& seq) const {
+    int M = seq.size();
+    if (M != N()) return false;
+    vector<int> pseq(N(), -1);  // permuted
+    for (int q = 0; q < N(); ++q) {
+      if (seq[q] >= N() || pseq[seq[q]] != -1) return false;
+      pseq[seq[q]] = q;
+    }
+    for (int u = 0; u < N(); ++u)
+      for (int v : neigh[u])
+        if (pseq[u] >= pseq[v]) return false;
+
+    return true;
+  }
+
+  template <typename F>
+  void topological_sort_lex(F f) const {
+    vector<int> in_deg(N());
+    for (int u = 0; u < N(); ++u)
+      for (int v : neigh[u]) ++in_deg[v];
+    priority_queue<int, vector<int>, greater<int>> q;
+    for (int u = 0; u < N(); ++u)
+      if (in_deg[u] == 0) q.push(u);
+
+    while (!q.empty()) {
+      int u = q.top();
+      q.pop();
+      f(u);
+      for (int v : neigh[u])
+        if (--in_deg[v] == 0) q.push(v);
+    }
+  }
+
+  bool is_cyclic() const {
+    vector<int> color(N());
+    auto dfs_ = [this, &color](int u, auto dfs__) -> bool {
+      color[u] = 1;
+      for (int v : neigh[u])
+        if (color[v] == 1 || (color[v] == 0 && dfs__(v, dfs__))) return true;
+
+      color[u] = 2;
+      return false;
+    };
+    for (int q = 0; q < N(); ++q)
+      if (!color[q] && dfs_(q, dfs_)) return true;
+
+    return false;
+  }
+
+  /*
+   * Return a cycle with an implicit step from path[N - 1] to path[0]
+   */
+  vector<int> find_cycle() const {
+    vector<int> color(N());
+    vector<int> succ(N());  // successor
+    pair<int, int> cycle_ends;
+    auto dfs_ = [this, &color, &succ, &cycle_ends](int u, auto dfs__) -> bool {
+      color[u] = 1;
+      for (int v : neigh[u])
+        if (color[v] == 0) {
+          succ[u] = v;
+          if (dfs__(v, dfs__)) return true;
+        } else if (color[v] == 1) {
+          cycle_ends = {u, v};
+          return true;
+        }
+      color[u] = 2;
+      return false;
+    };
+    for (int q = 0; q < N(); ++q)
+      if (!color[q] && dfs_(q, dfs_)) {
+        auto [a, b] = cycle_ends;
+        vector<int> res;
+        for (int v = b; v != a; v = succ[v]) res.push_back(v);
+        res.push_back(a);
+        return res;
+      }
+    return {};
+  }
+
+  AdjMat to_adjmat() const {
+    AdjMat mat(N());
+    for (int q = 0; q < N(); ++q)
+      for (int v : neigh[q]) mat[{q, v}] += 1;
+
+    return mat;
+  }
+
+  bool has_cycle(vector<int> const& path) const {
+    return to_adjmat().has_cycle(path);
   }
 
  private:
