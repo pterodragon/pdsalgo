@@ -88,8 +88,6 @@ class SuffixArray {
     for (int k = 1; k < N; k <<= 1) {
       counting_sort(k, temp);
       counting_sort(0, temp);
-      print();
-      cout << "---\n";
       temp[sa[0]] = 1;  // r (rank) starts from 1 below; sa[i] + k > n => rank 0
       for (int i = 1, r = 1; i < N; ++i) {  // rerank
         r += ra[sa[i]] != ra[sa[i - 1]] || ra[sa[i] + k] != ra[sa[i - 1] + k];
@@ -119,8 +117,6 @@ string_view SuffixArray<Alph, SC>::lcs(string_view s1, string_view s2) {
   static_assert(Alph > (unsigned char)(UC - SC));
   auto cat = string(s1) + UC + string(s2);
   auto sa = SuffixArray<Alph, SC>(cat);
-  cout << "sa: \n";
-  sa.print();
   auto lcp = sa.lcp();
   auto is_s1 = [&sa, m = s1.size()](int q) { return sa.sa[q] < m; };
   int z = 0;
