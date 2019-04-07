@@ -5,14 +5,82 @@
 #include <random>
 
 #include "ds/graph.hpp"
-#include "prettyprint.hpp"
 
 using namespace P;
 using namespace std;
+TEST_CASE("dijkstra's algorithm", "[graph]") {
+  int n = 6;
+  WeightedAdjList al(n);
+  auto add_edge = [&al](auto u, auto v, int w) {
+    al[u].push_back({v, w});
+    al[v].push_back({u, w});
+  };
+  add_edge(1, 2, 5);
+  add_edge(1, 4, 9);
+  add_edge(1, 5, 1);
+  add_edge(4, 5, 2);
+  add_edge(4, 3, 6);
+  add_edge(2, 3, 2);
+  CAPTURE(al);
+  SECTION("isolated node") {
+    auto d = al.dijkstra(0);
+    CAPTURE(d);
+    vector exp{0, INF, INF, INF, INF, INF};
+    REQUIRE(d == exp);
+  }
+  SECTION("reducible case") {
+    auto d = al.dijkstra(1);
+    CAPTURE(d);
+    vector exp{INF, 0, 5, 7, 3, 1};
+    REQUIRE(d == exp);
+  }
+}
+
+TEST_CASE("weighted graph", "[graph]") {
+  int n = 64;
+  WeightedAdjList al(n);
+  al[0].push_back({1, 2});
+  al[1].push_back({0, 2});
+
+  SECTION("dfs") {
+    vector<Node> seq;
+    al.dfs(0, [&seq](Node x) { seq.push_back(x); });
+    vector<Node> exp{0, 1};
+    REQUIRE(seq == exp);
+  }
+  SECTION("bfs") {
+    vector<Node> seq;
+    al.bfs(0, [&seq](Node x) { seq.push_back(x); });
+    vector<Node> exp{0, 1};
+    REQUIRE(seq == exp);
+    seq.clear();
+    al.bfs_depth(0, [&seq](Node x, int depth) { seq.push_back(x); });
+    REQUIRE(seq == exp);
+  }
+  SECTION("cyclic") { REQUIRE(al.is_cyclic()); }
+}
+
+TEST_CASE("weighted graph2", "[graph]") {
+  int n = 64;
+  WeightedAdjList al(n);
+  for (int y = 0; y < n; ++y) {
+    for (int x = 0; x < n; ++x) {
+      if (y != x && (x / 2 == y)) al[y].push_back(x);
+    }
+  }  // complete binary tree (directed from root)
+  vector<Node> seq;
+  al.dfs_dtree(0, [&seq](Node x) { seq.push_back(x); });
+  seq.clear();
+  al.topological_sort_lex([&seq](Node x) { seq.push_back(x); });
+  REQUIRE(al.is_topological_sort(seq));
+  seq.clear();
+  al.topological_sort([&seq](Node x) { seq.push_back(x); });
+  REQUIRE(al.is_topological_sort(seq));
+}
 
 TEST_CASE("graph traversal", "[graph]") {
   auto n = GENERATE(1, 2, 15, 16, 17, 37);
-  vector<int> seq;
+  vector<Node> seq;
   {
     AdjList al(n);
     for (int y = 0; y < n; ++y) {
@@ -21,10 +89,10 @@ TEST_CASE("graph traversal", "[graph]") {
       }
     }
     for (int q = 0; q < n; ++q) {
-      al.dfs(q, [&seq](int x) { seq.push_back(x); });
+      al.dfs(q, [&seq](Node x) { seq.push_back(x); });
       REQUIRE(seq.size() == n);
       seq.clear();
-      al.bfs(q, [&seq](int x) { seq.push_back(x); });
+      al.bfs(q, [&seq](Node x) { seq.push_back(x); });
       REQUIRE(seq.size() == n);
       seq.clear();
     }
@@ -40,9 +108,9 @@ TEST_CASE("graph traversal", "[graph]") {
         }
       }
       int root = 2;
-      al.dfs(root, [&seq](int x) { seq.push_back(x); });
-      vector<int> exp;
-      for (int q = root; q < n; q += 3) exp.push_back(q);
+      al.dfs(root, [&seq](Node x) { seq.push_back(x); });
+      vector<Node> exp;
+      for (int q = root; q < n; q += 3) exp.push_back(Node(q));
       REQUIRE(seq == exp);
       seq.clear();
     }
@@ -54,10 +122,10 @@ TEST_CASE("graph traversal", "[graph]") {
         if (y != x && (x / 2 == y)) al[y].push_back(x);
       }
     }  // complete binary tree (directed from root)
-    al.dfs_dtree(0, [&seq](int x) { seq.push_back(x); });
+    al.dfs_dtree(0, [&seq](Node x) { seq.push_back(x); });
     REQUIRE(seq.size() == n);
     seq.clear();
-    al.bfs(0, [&seq](int x) { seq.push_back(x); });
+    al.bfs(0, [&seq](Node x) { seq.push_back(x); });
     REQUIRE(seq.size() == n);
     seq.clear();
     vector<int> exp_depth;
@@ -65,7 +133,7 @@ TEST_CASE("graph traversal", "[graph]") {
     for (int q = 0; q < n; ++q) {
       exp_depth.push_back(q ? sizeof(q) * 8 - __builtin_clz(q) : 0);
     }
-    al.bfs_depth(0, [&seq, &actual_depth](int x, int depth) {
+    al.bfs_depth(0, [&seq, &actual_depth](Node x, int depth) {
       seq.push_back(x);
       actual_depth.push_back(depth);
     });
@@ -84,9 +152,9 @@ TEST_CASE("topological sort lexicographical", "[graph]") {
   al[4].push_back(1);
   al[2].push_back(3);
   al[3].push_back(1);
-  vector<int> seq;
-  al.topological_sort_lex([&seq](int x) { seq.push_back(x); });
-  vector exp{4, 5, 0, 2, 3, 1};
+  vector<Node> seq;
+  al.topological_sort_lex([&seq](Node x) { seq.push_back(x); });
+  vector<Node> exp{4, 5, 0, 2, 3, 1};
   REQUIRE(seq == exp);
   REQUIRE(al.is_topological_sort(seq));
 }
@@ -98,15 +166,15 @@ TEST_CASE("topological sort", "[graph]") {
 
   AdjList al(n);
   for (int q = 0; q < 3 * n; ++q) {
-    int a = dis(gen);
-    int b = dis(gen);
+    Node a = dis(gen);
+    Node b = dis(gen);
     if (find(cbegin(al[a]), cend(al[a]), b) == cend(al[a])) {
       al[a].push_back(b);
       if (al.is_cyclic()) al[a].pop_back();
     }
   }
-  vector<int> seq;
-  al.topological_sort([&seq](int x) { seq.push_back(x); });
+  vector<Node> seq;
+  al.topological_sort([&seq](Node x) { seq.push_back(x); });
   CAPTURE(seq);
   REQUIRE(al.is_topological_sort(seq));
 }

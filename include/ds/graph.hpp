@@ -6,7 +6,10 @@
 #include <iostream>
 #include <queue>
 #include <tuple>
+#include <utility>
 #include <vector>
+
+#include "prettyprint.hpp"
 
 using namespace std;
 
@@ -16,6 +19,37 @@ using namespace std;
  * Vertices are represented by int
  */
 namespace P {
+
+constexpr int INF = 0x3f3f3f3f;
+
+struct Node {
+  Node(int x) : val(x) {}
+  Node() = default;
+  friend ostream& operator<<(ostream& os, Node n) { return os << n.val; }
+  bool operator==(Node const& n) const { return n.val == this->val; }
+  bool operator!=(Node const& n) const { return !this->operator==(n); }
+  operator int() const { return this->val; }
+
+  int val;  // destination
+};
+
+struct WeightedNode {
+  WeightedNode(int x) : val(x) {}
+  WeightedNode(int x, int w) : val(x), w(w) {}
+  WeightedNode() = default;
+  friend ostream& operator<<(ostream& os, WeightedNode n) {
+    return os << '(' << n.val << ", " << n.w << ')';
+  }
+  bool operator==(WeightedNode const& n) const {
+    return n.val == this->val && n.w == this->w;
+  }
+  bool operator!=(WeightedNode const& n) const { return !this->operator==(n); }
+  operator int() const { return this->val; }
+  operator Node() const { return this->val; }
+
+  int val;  // destination
+  int w;    // weight
+};
 
 /*
  * Adjacency Matrix
@@ -51,7 +85,7 @@ struct AdjMat {
   /*
    * Implicit step from path[N - 1] to path[0]
    */
-  bool has_cycle(vector<int> const& path) {
+  bool has_cycle(vector<Node> const& path) {
     const int M = path.size();
     for (int q = 0; q < M - 1; ++q)
       if ((*this)[{path[q], path[q + 1]}] == 0) return false;
@@ -86,16 +120,22 @@ struct AdjMat {
  * - remove edge: O(|V|)
  * - query adjacency: O(|V|) for all the neighbors of a particular vertex
  *
+ * To provide custom Dest Node, provide a conversion function to Node
+ * and a conversion function to int (for destination)
  */
+template <typename Dest = Node>
 struct AdjList {
   AdjList(int n) : neigh(n) {}
-  vector<int>& operator[](int x) { return neigh[x]; }
+  vector<Dest>& operator[](int x) { return neigh[x]; }
+  vector<Dest> const& operator[](int x) const { return neigh[x]; }
   int N() const { return neigh.size(); }
 
-  using iterator = vector<vector<int>>::iterator;
-  using const_iterator = vector<vector<int>>::const_iterator;
+  using iterator = typename vector<vector<Dest>>::iterator;
+  using const_iterator = typename vector<vector<Dest>>::const_iterator;
   iterator begin() { return neigh.begin(); }
   iterator end() { return neigh.end(); }
+  const_iterator begin() const { return cbegin(); }
+  const_iterator end() const { return cend(); }
   const_iterator cbegin() const { return neigh.cbegin(); }
   const_iterator cend() const { return neigh.cend(); }
 
@@ -119,13 +159,13 @@ struct AdjList {
    * Assumes connected graph
    */
   template <typename F>
-  void dfs(int root, F f) const {
+  void dfs(Node root, F f) const {
     vector<int> visited(N());
-    auto dfs_ = [this, &visited, &f](int node, auto dfs__) {
+    auto dfs_ = [this, &visited, &f](Node node, auto dfs__) {
       if (visited[node]) return;
       visited[node] = true;
       f(node);
-      for (int v : neigh[node]) dfs__(v, dfs__);
+      for (auto v : neigh[node]) dfs__(v, dfs__);
     };
     dfs_(root, dfs_);
   }
@@ -134,22 +174,22 @@ struct AdjList {
    * Use only for directed tree traversal
    */
   template <typename F>
-  void dfs_dtree(int root, F f) const {
-    auto dfs_ = [this, &f](int node, auto dfs__) -> void {
+  void dfs_dtree(Node root, F f) const {
+    auto dfs_ = [this, &f](Node node, auto dfs__) -> void {
       f(node);
-      for (int v : neigh[node]) dfs__(v, dfs__);
+      for (auto v : neigh[node]) dfs__(v, dfs__);
     };
     dfs_(root, dfs_);
   }
 
   template <typename F>
-  void bfs(int root, F f) const {
-    queue<int> q;
+  void bfs(Node root, F f) const {
+    queue<Node> q;
     q.push(root);
     vector<int> visited(N());
     visited[root] = true;
     while (!q.empty()) {
-      int u = q.front();
+      auto u = q.front();
       q.pop();
       f(u);
       for (auto v : neigh[u]) {
@@ -161,16 +201,17 @@ struct AdjList {
   }
 
   template <typename F>
-  void bfs_depth(int root, F f) const {
-    queue<int> q;
+  void bfs_depth(Node root, F f) const {
+    queue<Node> q;
     q.push(root);
-    vector<int> depth(N());
+    vector<int> depth(N(), -1);
+    depth[root] = 0;
     while (!q.empty()) {
-      int u = q.front();
+      auto u = q.front();
       q.pop();
       f(u, depth[u]);
       for (auto v : neigh[u]) {
-        if (depth[v]) continue;
+        if (depth[v] != -1) continue;
         depth[v] = depth[u] + 1;
         q.push(v);
       }
@@ -189,16 +230,16 @@ struct AdjList {
   void topological_sort(F f) const {
     vector<int> in_deg(N());
     for (int u = 0; u < N(); ++u)
-      for (int v : neigh[u]) ++in_deg[v];
-    queue<int> q;
+      for (auto v : neigh[u]) ++in_deg[v];
+    queue<Node> q;
     for (int u = 0; u < N(); ++u)
       if (in_deg[u] == 0) q.push(u);
 
     while (!q.empty()) {
-      int u = q.front();
+      auto u = q.front();
       q.pop();
       f(u);
-      for (int v : neigh[u])
+      for (auto v : neigh[u])
         if (--in_deg[v] == 0) q.push(v);
     }
   }
@@ -207,7 +248,7 @@ struct AdjList {
    * Time complexity: O(|V|+|E|)
    * Space complexity: O(|V|)
    */
-  bool is_topological_sort(vector<int> const& seq) const {
+  bool is_topological_sort(vector<Node> const& seq) const {
     int M = seq.size();
     if (M != N()) return false;
     vector<int> pseq(N(), -1);  // permuted
@@ -216,7 +257,7 @@ struct AdjList {
       pseq[seq[q]] = q;
     }
     for (int u = 0; u < N(); ++u)
-      for (int v : neigh[u])
+      for (auto v : neigh[u])
         if (pseq[u] >= pseq[v]) return false;
 
     return true;
@@ -226,25 +267,25 @@ struct AdjList {
   void topological_sort_lex(F f) const {
     vector<int> in_deg(N());
     for (int u = 0; u < N(); ++u)
-      for (int v : neigh[u]) ++in_deg[v];
-    priority_queue<int, vector<int>, greater<int>> q;
+      for (auto v : neigh[u]) ++in_deg[v];
+    priority_queue<Node, vector<int>, greater<int>> q;
     for (int u = 0; u < N(); ++u)
       if (in_deg[u] == 0) q.push(u);
 
     while (!q.empty()) {
-      int u = q.top();
+      auto u = q.top();
       q.pop();
       f(u);
-      for (int v : neigh[u])
+      for (auto v : neigh[u])
         if (--in_deg[v] == 0) q.push(v);
     }
   }
 
   bool is_cyclic() const {
     vector<int> color(N());
-    auto dfs_ = [this, &color](int u, auto dfs__) -> bool {
+    auto dfs_ = [this, &color](Node u, auto dfs__) -> bool {
       color[u] = 1;
-      for (int v : neigh[u])
+      for (auto v : neigh[u])
         if (color[v] == 1 || (color[v] == 0 && dfs__(v, dfs__))) return true;
 
       color[u] = 2;
@@ -259,13 +300,13 @@ struct AdjList {
   /*
    * Return a cycle with an implicit step from path[N - 1] to path[0]
    */
-  vector<int> find_cycle() const {
+  vector<Node> find_cycle() const {
     vector<int> color(N());
-    vector<int> succ(N());  // successor
-    pair<int, int> cycle_ends;
-    auto dfs_ = [this, &color, &succ, &cycle_ends](int u, auto dfs__) -> bool {
+    vector<Node> succ(N());  // successor
+    pair<Node, Node> cycle_ends{0, 0};
+    auto dfs_ = [this, &color, &succ, &cycle_ends](Node u, auto dfs__) -> bool {
       color[u] = 1;
-      for (int v : neigh[u])
+      for (auto v : neigh[u])
         if (color[v] == 0) {
           succ[u] = v;
           if (dfs__(v, dfs__)) return true;
@@ -279,8 +320,8 @@ struct AdjList {
     for (int q = 0; q < N(); ++q)
       if (!color[q] && dfs_(q, dfs_)) {
         auto [a, b] = cycle_ends;
-        vector<int> res;
-        for (int v = b; v != a; v = succ[v]) res.push_back(v);
+        vector<Node> res;
+        for (auto v = b; v != a; v = succ[v]) res.push_back(v);
         res.push_back(a);
         return res;
       }
@@ -295,7 +336,7 @@ struct AdjList {
     return mat;
   }
 
-  bool has_cycle(vector<int> const& path) const {
+  bool has_cycle(vector<Node> const& path) const {
     return to_adjmat().has_cycle(path);
   }
 
@@ -305,7 +346,41 @@ struct AdjList {
   }
 
  private:
-  vector<vector<int>> neigh;  // list of adjacent vertices
+  vector<vector<Dest>> neigh;  // list of adjacent vertices
+};
+
+struct WeightedAdjList : public AdjList<WeightedNode> {
+  using Base = AdjList<WeightedNode>;
+  using Base::Base;
+
+  /*
+   * Precondition: There are no negative edges
+   *
+   * Time complexity: O(|E|log|V|)
+   *
+   * note 1: At most |E| duplicates of vertices so the complexity
+   *            is still O(|E|log|V|)
+   */
+  vector<int> dijkstra(Node root) const {
+    vector<int> dis(N(), INF);
+    vector<int> done(N());
+    dis[root] = 0;
+
+    using E = pair<int, Node>;  // distance, node
+    priority_queue<E, vector<E>, greater<E>> q;
+    q.push({0, root});
+
+    while (!q.empty()) {
+      auto [d, u] = q.top();
+      q.pop();
+      if (done[u]) continue;
+      done[u] = true;
+      for (auto [v, w] : (*this)[u])
+        if (dis[u] + w < dis[v])
+          q.push({dis[v] = dis[u] + w, v});  // see note 1
+    }
+    return dis;
+  }
 };
 
 /*
@@ -319,13 +394,13 @@ struct FunctionalGraph {
   /*
    * Find one of the cycles in the functional graph
    */
-  vector<int> find_cycle(int x = 0) const {
+  vector<Node> find_cycle(int x = 0) const {
     int a = x, b = x;
     do {
       a = succ[a];
       b = succ[succ[b]];
     } while (a != b);
-    vector<int> res;
+    vector<Node> res;
     do {
       res.push_back(a);
       a = succ[a];
@@ -336,7 +411,7 @@ struct FunctionalGraph {
   /*
    * Implicit step from path[N - 1] to path[0]
    */
-  bool has_cycle(vector<int> const& path) const {
+  bool has_cycle(vector<Node> const& path) const {
     const int M = path.size();
     if (M == 0 || succ[path[M - 1]] != path[0]) return false;
 
