@@ -146,3 +146,52 @@ TEST_CASE("is cyclic", "[graph]") {
     REQUIRE(al.is_cyclic());
   }
 }
+
+TEST_CASE("is functional", "[graph]") {
+  const int n = GENERATE(0, 1, 2, 3, 4, 33, 128);
+  CAPTURE(n);
+  mt19937 gen;
+  uniform_int_distribution<> dis(0, n - 1);
+
+  AdjList al(n);
+  for (auto& v : al)
+    if (gen() % 2) v.push_back(dis(gen));
+
+  REQUIRE(al.is_functional());
+  for (auto& v : al) v.push_back(dis(gen));
+  for (auto& v : al) v.push_back(dis(gen));
+  if (n > 0) REQUIRE_FALSE(al.is_functional());
+}
+
+TEST_CASE("functional graph find cycle", "[graph]") {
+  SECTION("self loop") {
+    const int n = 1;
+    FunctionalGraph g(n);
+    g[0] = 0;
+    auto res = g.find_cycle();
+    REQUIRE(g.has_cycle(res));
+    REQUIRE(res.size() == 1);
+  }
+  SECTION("large loop") {
+    const int n = 4;
+    FunctionalGraph g(n);
+    g[0] = 1;
+    g[1] = 2;
+    g[2] = 3;
+    g[3] = 0;
+    auto res = g.find_cycle();
+    REQUIRE(g.has_cycle(res));
+    REQUIRE(res.size() == 4);
+  }
+  SECTION("go straight and enter loop") {
+    const int n = 4;
+    FunctionalGraph g(n);
+    g[0] = 1;
+    g[1] = 2;
+    g[2] = 3;
+    g[3] = 2;
+    auto res = g.find_cycle();
+    REQUIRE(g.has_cycle(res));
+    REQUIRE(res.size() == 2);
+  }
+}

@@ -92,6 +92,13 @@ struct AdjList {
   vector<int>& operator[](int x) { return neigh[x]; }
   int N() const { return neigh.size(); }
 
+  using iterator = vector<vector<int>>::iterator;
+  using const_iterator = vector<vector<int>>::const_iterator;
+  iterator begin() { return neigh.begin(); }
+  iterator end() { return neigh.end(); }
+  const_iterator cbegin() const { return neigh.cbegin(); }
+  const_iterator cend() const { return neigh.cend(); }
+
   friend ostream& operator<<(ostream& os, AdjList& al) {
     for (int q = 0; q < al.N(); ++q) {
       os << q << ": ";
@@ -292,8 +299,54 @@ struct AdjList {
     return to_adjmat().has_cycle(path);
   }
 
+  bool is_functional() const {
+    return all_of(cbegin(), cend(),
+                  [](auto const& adj_list) { return adj_list.size() < 2; });
+  }
+
  private:
   vector<vector<int>> neigh;  // list of adjacent vertices
+};
+
+/*
+ * Functional graphs have at least 1 cycle
+ */
+struct FunctionalGraph {
+  FunctionalGraph(int n) : succ(n) {}
+  int& operator[](int x) { return succ[x]; }
+  int N() const { return succ.size(); }
+
+  /*
+   * Find one of the cycles in the functional graph
+   */
+  vector<int> find_cycle(int x = 0) const {
+    int a = x, b = x;
+    do {
+      a = succ[a];
+      b = succ[succ[b]];
+    } while (a != b);
+    vector<int> res;
+    do {
+      res.push_back(a);
+      a = succ[a];
+    } while (a != b);
+    return res;
+  }
+
+  /*
+   * Implicit step from path[N - 1] to path[0]
+   */
+  bool has_cycle(vector<int> const& path) const {
+    const int M = path.size();
+    if (M == 0 || succ[path[M - 1]] != path[0]) return false;
+
+    for (int q = 0; q < M - 1; ++q)
+      if (succ[path[q]] != path[q + 1]) return false;
+    return true;
+  }
+
+ private:
+  vector<int> succ;
 };
 
 /*
