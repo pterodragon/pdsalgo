@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <numeric>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -42,6 +43,10 @@ using namespace std;
  * note
  * 1:   Just to be pedantic, if the char is a negative value then there's a
  *      problem during counting
+ *      also need to handle the case when string has a char == SC
+ *      which will potential mess up with the counting
+ *      (treating as rank 0 when i + k >= N)
+ *
  * 2:   ra size is 2 * N just to avoid the annoying bound checks like
  *      sa[i] + k < N etc.; values defaulted to be 0
  */
@@ -58,6 +63,7 @@ class SuffixArray {
   vector<int> lcp() const;
   vector<int> plcp() const;
   pair<int, int> lrs() const;
+  vector<string> to_vector() const;
 
   template <char UC = '$'>
   static string_view lcs(string_view s1, string_view s2);
@@ -66,11 +72,10 @@ class SuffixArray {
   // stable sort is necessary
   // using std::stable_sort to skip this but increase complexity
   inline void counting_sort(int k, vector<int>& temp) {
-    array<int, Alph> c{};
+    array<int, Alph + 1> c{};  // see note 1
     for (int i = 0; i < N; ++i) ++c[ra[i + k]];
     partial_sum(begin(c), end(c), begin(c));
-    for (int i = N - 1; i >= 0; --i)
-      temp[--c[ra[sa[i] + k]]] = sa[i];
+    for (int i = N - 1; i >= 0; --i) temp[--c[ra[sa[i] + k]]] = sa[i];
 
     sa = temp;
   }
@@ -78,11 +83,13 @@ class SuffixArray {
   void construct() {
     vector<int> temp(N);
     for (int i = 0; i < sv.size(); ++i)
-      ra[i] = (unsigned char)sv[i] - SC;  // see note 1
+      ra[i] = (unsigned char)sv[i] - SC + 1;  // see note 1
     iota(begin(sa), end(sa), 0);
     for (int k = 1; k < N; k <<= 1) {
       counting_sort(k, temp);
       counting_sort(0, temp);
+      print();
+      cout << "---\n";
       temp[sa[0]] = 1;  // r (rank) starts from 1 below; sa[i] + k > n => rank 0
       for (int i = 1, r = 1; i < N; ++i) {  // rerank
         r += ra[sa[i]] != ra[sa[i - 1]] || ra[sa[i] + k] != ra[sa[i - 1] + k];
@@ -93,12 +100,9 @@ class SuffixArray {
     }
   }
 
-  const string_view sv;
-
  public:
+  const string_view sv;
   const int N;
-
- private:
   vector<int> ra;  // rank array
   vector<int> sa;  // suffix array
 };
@@ -115,6 +119,8 @@ string_view SuffixArray<Alph, SC>::lcs(string_view s1, string_view s2) {
   static_assert(Alph > (unsigned char)(UC - SC));
   auto cat = string(s1) + UC + string(s2);
   auto sa = SuffixArray<Alph, SC>(cat);
+  cout << "sa: \n";
+  sa.print();
   auto lcp = sa.lcp();
   auto is_s1 = [&sa, m = s1.size()](int q) { return sa.sa[q] < m; };
   int z = 0;
@@ -195,5 +201,12 @@ pair<int, int> SuffixArray<Alph, SC>::lrs() const {
   return {sa[distance(begin(lcp_), it)], *it};
 }
 
+template <unsigned Alph, char SC>
+vector<string> SuffixArray<Alph, SC>::to_vector() const {
+  vector<string> res;
+  for (int i = 0; i < N; ++i) res.push_back(string(sv.substr(sa[i])));
+  return res;
 }
+
+}  // namespace P
 #endif /* SUFFIX_ARRAY_HPP */
