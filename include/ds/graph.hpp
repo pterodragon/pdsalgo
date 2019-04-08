@@ -20,7 +20,7 @@ using namespace std;
  */
 namespace P {
 
-constexpr int INF = 0x3f3f3f3f;
+int const INF = 0x3f3f3f3f;
 
 struct Node {
   Node(int x) : val(x) {}
@@ -156,7 +156,7 @@ struct AdjList {
    * For directed tree traversal from root, use dfs_dtree
    * to save the visited check
    *
-   * Assumes connected graph
+   * Precondition: connected graph
    */
   template <typename F>
   void dfs(Node root, F f) const {
@@ -221,7 +221,7 @@ struct AdjList {
   /*
    * Time complexity: O(|V|+|E|)
    *
-   * Assumes the graph is acyclic
+   * Precondition: graph is acyclic
    *
    * topological_sort_lex uses priority queue for lexicographically smallest
    * result
@@ -371,7 +371,7 @@ struct WeightedAdjList : public AdjList<WeightedNode> {
     q.push({0, root});
 
     while (!q.empty()) {
-      auto [d, u] = q.top();
+      auto [_, u] = q.top(); // distance is smallest in q
       q.pop();
       if (done[u]) continue;
       done[u] = true;

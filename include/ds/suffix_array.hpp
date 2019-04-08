@@ -54,7 +54,7 @@ template <unsigned Alph = 128, char SC = '\0'>  // |Sigma|, start char
 class SuffixArray {
  public:
   SuffixArray(string_view sv)
-      : sv(sv), N(sv.length()), ra(2 * N), sa(N) {  // see note 2
+      : sv(sv), N(sv.size()), ra(2 * N), sa(N) {  // see note 2
     construct();
   }
 
@@ -82,7 +82,7 @@ class SuffixArray {
 
   void construct() {
     vector<int> temp(N);
-    for (int i = 0; i < sv.size(); ++i)
+    for (int i = 0; i < N; ++i)
       ra[i] = (unsigned char)sv[i] - SC + 1;  // see note 1
     iota(begin(sa), end(sa), 0);
     for (int k = 1; k < N; k <<= 1) {
@@ -115,15 +115,16 @@ template <unsigned Alph, char SC>
 template <char UC>
 string_view SuffixArray<Alph, SC>::lcs(string_view s1, string_view s2) {
   static_assert(Alph > (unsigned char)(UC - SC));
+  int const N_s1 = s1.size();
   auto cat = string(s1) + UC + string(s2);
   auto sa = SuffixArray<Alph, SC>(cat);
   auto lcp = sa.lcp();
-  auto is_s1 = [&sa, m = s1.size()](int q) { return sa.sa[q] < m; };
+  auto is_s1 = [&sa, N_s1](int q) { return sa.sa[q] < N_s1; };
   int z = 0;
   for (int q = 1; q < sa.N; ++q)
     if (lcp[q] > lcp[z] && is_s1(q - 1) != is_s1(q)) z = q;
 
-  return s1.substr(z ? sa.sa[z - (sa.sa[z] > s1.size())] : 0, lcp[z]);
+  return s1.substr(z ? sa.sa[z - (sa.sa[z] > N_s1)] : 0, lcp[z]);
 }
 
 template <unsigned Alph, char SC>
@@ -140,7 +141,7 @@ void SuffixArray<Alph, SC>::print() const {
  */
 template <unsigned Alph, char SC>
 vector<int> SuffixArray<Alph, SC>::binary_search(string_view pat) const {
-  if (empty(pat) || pat.size() > N) return {0, 0};
+  if (empty(pat) || (int)pat.size() > N) return {0, 0};
   auto it_l = lower_bound(cbegin(sa), cend(sa), pat, [this](auto a, auto pat) {
     return sv.substr(a) < pat;
   });

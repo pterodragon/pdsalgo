@@ -16,7 +16,7 @@ using namespace std;
 
 vector<string> to_sorted_suffixes(string x) {
   vector<string> res;
-  for (int q = 0; q < x.size(); ++q) res.push_back(x.substr(q));
+  for (int q = 0; q < (int)x.size(); ++q) res.push_back(x.substr(q));
   sort(begin(res), end(res));
 
   return res;
@@ -75,7 +75,7 @@ TEST_CASE("suffix array build & method tests", "[suffix_array]") {
     sort(begin(strs), end(strs));
     vector<int> lcp;
     if (!s.empty()) lcp.push_back(0);
-    for (int q = 1; q < s.size(); ++q) {
+    for (int q = 1; q < (int)s.size(); ++q) {
       auto str1 = strs[q - 1];
       auto str2 = strs[q];
       lcp.push_back(distance(

@@ -32,8 +32,9 @@ TEST_CASE("suffix tree build & method tests", "[suffix_tree]") {
   }
   DYNAMIC_SECTION("lcs; s = " << s) {
     string uc(1, 'a' + 27);
-    for (int q = 0; q < s.size(); ++q) {
-      for (int w = q + 1; q + w < s.size(); ++w) {
+    int const N = s.size();
+    for (int q = 0; q < N; ++q) {
+      for (int w = q + 1; q + w < N; ++w) {
         string_view pat(s.data() + q, w);
         auto arg = string(pat);
         auto lcs = SuffixTree<29, 'a'>::lcs(s, arg);
@@ -48,9 +49,10 @@ TEST_CASE("suffix tree build & method tests", "[suffix_tree]") {
   }
   DYNAMIC_SECTION("search all; s = " << s) {
     string y = s + string(1, 'a' + 26);  // append unique char
+    int const N = y.size();
     SuffixTree<27, 'a'> st(y);
-    for (int q = 0; q < y.size(); ++q) {
-      for (int w = 1; q + w < y.size(); ++w) {
+    for (int q = 0; q < N; ++q) {
+      for (int w = 1; q + w < N; ++w) {
         string_view pat(s.data() + q, w);
         unordered_set<int> exp;
         for (int e = 0; e + pat.size() <= y.size(); ++e)

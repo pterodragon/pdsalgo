@@ -12,7 +12,7 @@ void counting_sort_inplace(vector<T>& v) {
   array<int, S> c{};
   for (auto const& e : v) ++c[e];
   auto it = begin(v);
-  for (int q = 0; q < c.size(); ++q) it = fill_n(it, c[q], q);
+  for (int q = 0; q < (int)c.size(); ++q) it = fill_n(it, c[q], q);
 }
 
 // stable sort the collection based on f(e) for e in v
@@ -25,7 +25,7 @@ vector<T> counting_sort(const vector<T>& v, Func f) {
   for (auto const& e : v) ++c[f(e)];
   partial_sum(begin(c), end(c), begin(c));
   vector<T> res(v.size());
-  for (int q = v.size() - 1; q >= 0 && q < v.size(); --q)
+  for (int q = v.size() - 1; q >= 0 && q < (int)v.size(); --q)
     res[--c[f(v[q])]] = v[q];
   return res;
 }

@@ -2,7 +2,7 @@ build_type="Debug"
 build_tests=""
 build_test_extra=""
 
-cmake_cxx_flags="-O0 -ggdb3 -Wall"
+cmake_cxx_flags="-O0 -ggdb3 -Wall -Wsign-compare"
 third_party_dir=$(pwd)/third_party
 while getopts "rtp:" o; do
     case "${o}" in

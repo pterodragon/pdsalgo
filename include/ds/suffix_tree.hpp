@@ -125,7 +125,7 @@ bool SuffixTree<Alph, SC>::has_substr(string_view pat) const {
     int len_check = min((int)pat.size() - i, len);
     if (t.substr(kp, len_check) != pat.substr(i, len_check)) return false;
     i += len;
-    if (i >= pat.size()) return true;
+    if (i >= (int)pat.size()) return true;
     s = sp;
   };
 }
@@ -232,7 +232,7 @@ string_view SuffixTree<Alph, SC>::lcs(string_view sva, string_view svb) {
   SuffixTree st(s);
   using T = tuple<int, int>;  // len, idx, state
   using U = pair<int, T>;     // belongs to, T
-  auto dfs = [&st, N_1 = sa.size()](T res, state s, auto f) -> U {
+  auto dfs = [&st, N_1 = (int)sa.size()](T res, state s, auto f) -> U {
     auto len = get<0>(res);
     int b = 0;
     for (int c = 0; c < Alph; ++c) {
@@ -254,7 +254,7 @@ string_view SuffixTree<Alph, SC>::lcs(string_view sva, string_view svb) {
   auto [b, res] = dfs({0, 0}, ROOT, dfs);
   auto [len, i] = res;
   if (b != 3) return sa.substr(0, 0);
-  bool first = i - len < sa.size();
+  bool first = i - len < (int)sa.size();
   return (first ? sva : svb).substr(i - len - (first ? 0 : sa.size()), len);
 }
 
