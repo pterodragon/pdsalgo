@@ -1,3 +1,6 @@
+#ifndef COUNTING_SORT_HPP
+#define COUNTING_SORT_HPP
+
 #include <algorithm>
 #include <array>
 #include <functional>
@@ -45,3 +48,5 @@ vector<T> counting_sort2(const vector<T>& v, Func f) {
   return res;
 }
 }  // namespace P
+
+#endif /* COUNTING_SORT_HPP */

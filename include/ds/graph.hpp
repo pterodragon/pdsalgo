@@ -11,14 +11,14 @@
 
 #include "prettyprint.hpp"
 
-using namespace std;
-
 /*
  * Representation of graphs
  *
  * Vertices are represented by int
  */
 namespace P {
+
+using namespace std;
 
 int const INF = 0x3f3f3f3f;
 
@@ -393,6 +393,8 @@ struct FunctionalGraph {
 
   /*
    * Find one of the cycles in the functional graph
+   *
+   * Floyd's cycle-finding algorithm
    */
   vector<Node> find_cycle(int x = 0) const {
     int a = x, b = x;
